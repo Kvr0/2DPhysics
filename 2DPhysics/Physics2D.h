@@ -139,6 +139,20 @@ namespace phys2d
 		Border(const Line& _line, BorderDir _dir)
 			:m_line(_line), m_dir(_dir), BorderRef(m_line, m_dir) {}
 	};
+
+	// Collision
+	class Collision
+	{
+	public:
+		static bool is_hit(const LineConstRef& _line0, const LineConstRef& _line1)
+		{
+			auto tc1 = (_line0.p0.x.value() - _line0.p1.x.value()) * (_line1.p0.y.value() - _line0.p0.y.value()) + (_line0.p0.y.value() - _line0.p1.y.value()) * (_line0.p0.x.value() - _line1.p0.x.value());
+			auto tc2 = (_line0.p0.x.value() - _line0.p1.x.value()) * (_line1.p1.y.value() - _line0.p0.y.value()) + (_line0.p0.y.value() - _line0.p1.y.value()) * (_line0.p0.x.value() - _line1.p1.x.value());
+			auto td1 = (_line1.p0.x.value() - _line1.p1.x.value()) * (_line0.p0.y.value() - _line1.p0.y.value()) + (_line1.p0.y.value() - _line1.p1.y.value()) * (_line1.p0.x.value() - _line0.p0.x.value());
+			auto td2 = (_line1.p0.x.value() - _line1.p1.x.value()) * (_line0.p1.y.value() - _line1.p0.y.value()) + (_line1.p0.y.value() - _line1.p1.y.value()) * (_line1.p0.x.value() - _line0.p1.x.value());
+			return tc1 * tc2 < 0 && td1 * td2 < 0;
+		}
+	};
 }
 
 #endif // !_PHYSICS2D_H_
