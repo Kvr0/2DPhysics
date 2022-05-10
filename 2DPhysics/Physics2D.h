@@ -99,8 +99,8 @@ namespace phys2d
 	private:
 		Vector m_p0, m_p1;
 	public:
-		Line(const Vector& _p0, const Vector& _p1)
-			:m_p0(_p0), m_p1(_p1), LineRef(m_p0, m_p1) {}
+		Line(const VectorConstRef& _p0, const VectorConstRef& _p1)
+			:m_p0(_p0.x.value(),_p0.y.value()), m_p1(_p1.x.value(), _p1.y.value()), LineRef(m_p0, m_p1) {}
 	};
 
 	// Border
@@ -138,21 +138,58 @@ namespace phys2d
 		Line m_line;
 		BorderDir m_dir;
 	public:
-		Border(const Line& _line, BorderDir _dir)
-			:m_line(_line), m_dir(_dir), BorderRef(m_line, m_dir) {}
+		Border(const LineConstRef& _line, BorderDir _dir)
+			:m_line(_line.p0,_line.p1), m_dir(_dir), BorderRef(m_line, m_dir) {}
 	};
 
 	// Collision
 	class Collision
 	{
 	public:
+		static Vector add(const VectorConstRef& _v0, const VectorConstRef& _v1)
+		{
+			return Vector(_v0.x.value() + _v1.x.value(), _v0.y.value() + _v1.y.value());
+		}
+
+		static Vector sub(const VectorConstRef& _v0, const VectorConstRef& _v1)
+		{
+			return Vector(_v0.x.value() - _v1.x.value(), _v0.y.value() - _v1.y.value());
+		}
+
+		static Vector times(const VectorConstRef& _v, const ValueConstRef& _a)
+		{
+			return Vector(_v.x.value() * _a.value(), _v.y.value() * _a.value());
+		}
+
+		static value_t dot_product(const VectorConstRef& _v0, const VectorConstRef& _v1)
+		{
+			return _v0.x.value() * _v1.x.value() + _v0.y.value() * _v1.y.value();
+		}
+
+		static value_t cross_product(const VectorConstRef& _v0, const VectorConstRef& _v1)
+		{
+			return _v0.x.value() * _v1.y.value() - _v1.x.value() * _v0.y.value();
+		}
+
 		static bool is_hit(const LineConstRef& _line0, const LineConstRef& _line1)
 		{
-			auto tc1 = (_line0.p0.x.value() - _line0.p1.x.value()) * (_line1.p0.y.value() - _line0.p0.y.value()) + (_line0.p0.y.value() - _line0.p1.y.value()) * (_line0.p0.x.value() - _line1.p0.x.value());
-			auto tc2 = (_line0.p0.x.value() - _line0.p1.x.value()) * (_line1.p1.y.value() - _line0.p0.y.value()) + (_line0.p0.y.value() - _line0.p1.y.value()) * (_line0.p0.x.value() - _line1.p1.x.value());
-			auto td1 = (_line1.p0.x.value() - _line1.p1.x.value()) * (_line0.p0.y.value() - _line1.p0.y.value()) + (_line1.p0.y.value() - _line1.p1.y.value()) * (_line1.p0.x.value() - _line0.p0.x.value());
-			auto td2 = (_line1.p0.x.value() - _line1.p1.x.value()) * (_line0.p1.y.value() - _line1.p0.y.value()) + (_line1.p0.y.value() - _line1.p1.y.value()) * (_line1.p0.x.value() - _line0.p1.x.value());
+			auto atb = sub(_line0.p1, _line0.p0);
+			auto tc1 = cross_product(atb, sub(_line1.p0, _line0.p0));
+			auto tc2 = cross_product(atb, sub(_line1.p1, _line0.p0));
+
+			auto ctd = sub(_line1.p1, _line1.p0);
+			auto td1 = cross_product(ctd, sub(_line0.p0, _line1.p0));
+			auto td2 = cross_product(ctd, sub(_line0.p1, _line1.p0));
+
 			return tc1 * tc2 < 0 && td1 * td2 < 0;
+		}
+
+		static value_t hit_time(const VectorConstRef& _p, const VectorConstRef& _v, const LineConstRef& _line, value_t _max_t)
+		{
+			if (!is_hit(Line(_p, add(_p, times(_v, _max_t))), _line)) return _max_t;
+			auto v = sub(_line.p0, _p);
+			auto v1 = sub(_line.p1, _line.p0);
+			return cross_product(v, v1) / cross_product(v1, _v);
 		}
 	};
 }
