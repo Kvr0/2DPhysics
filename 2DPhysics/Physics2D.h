@@ -128,6 +128,8 @@ namespace phys2d
 
 		BorderConstRef(const LineConstRef& _line, const ConstRef<BorderDir>& _dir)
 			:LineConstRef(_line), dir(_dir) {}
+		BorderConstRef(const BorderRef& _border)
+			:BorderConstRef(LineConstRef(_border.p0, _border.p1), _border.dir) {}
 	};
 
 	class Border : public BorderRef
